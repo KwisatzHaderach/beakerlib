@@ -1378,26 +1378,32 @@ rlIsCentOS(){
 
 
 __INTERNAL_rlGetOSReleaseItem(){
-  local osrelease_file=/etc/os-release item="$1" value res=0
+  local osrelease_file=${ALTERNATIVE_OS_RELEASE} item="$1" value res=0
   if [[ ! -e $osrelease_file ]]; then
-    rlLogDebug "could not find file $osrelease_file"
-    res=2
+    if [[ -z $osrelease_file ]]; then
+      osrelease_file=$(cat /etc/os-release || exit 3)
+      res=$?
+    fi
   else
-    value=$(. $osrelease_file || exit 3; [[ -n "${!item+x}" ]] || exit 1; eval "echo \"\$${item}\"")
+    osrelease_file=$(cat $osrelease_file || exit 3)
     res=$?
-    case $res in
-      0)
-        echo "$value"
-        rlLogDebug "$FUNCNAME(): parsed $item=$value from $osrelease_file"
-        ;;
-      3)
-        rlLogError "could not parse the $osrelease_file"
-        ;;
-      1)
-        rlLogDebug "could not find $item"
-        ;;
-    esac
   fi
+  if [[ $res == 0 ]]; then
+    value=$(eval "$osrelease_file"; [[ -n "${!item+x}" ]] || exit 1; eval "echo \"\$${item}\"")
+    res=$?
+  fi
+  case $res in
+    0)
+      echo "$value"
+      rlLogDebug "$FUNCNAME(): parsed $item=$value from $osrelease_file"
+      ;;
+    3)
+      rlLogError "could not parse the $osrelease_file"
+      ;;
+    1)
+      rlLogDebug "could not find $item"
+      ;;
+  esac
   return $res
 }
 

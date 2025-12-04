@@ -531,25 +531,17 @@ EOF
 
 # fake os-release so we can control what rlIsOS and others see
 fake_os_release(){
-if [[ ! -e "/etc/os-release.bac" ]]; then
-  mv /etc/os-release /etc/os-release.bac
-fi
+export ALTERNATIVE_OS_RELEASE=/tmp/fake-os-release
 if [[ -n "$1" ]]; then
-  ## clean up after intial use of function
-  if [[ "$1" == "--clean_up" && -e "/etc/os-release.bac" ]]; then
-    rm -f "/etc/os-release"
-    mv /etc/os-release.bac /etc/os-release
-    return
-  fi
   ## creates and fills fake os-release
-  touch /etc/os-release
-  cat > /etc/os-release <<EOF
+  touch $ALTERNATIVE_OS_RELEASE
+  cat > $ALTERNATIVE_OS_RELEASE <<EOF
 ID="$1"
 VERSION_ID="$3"
 EOF
 
   if [[ $2 != "" ]]; then
-    cat >> /etc/os-release <<EOF
+    cat >> $ALTERNATIVE_OS_RELEASE <<EOF
 ID_LIKE="$2"
 EOF
   fi
@@ -631,8 +623,6 @@ test_rlIsRHEL(){
     assertLog "approach through 'os-release'"
     # calling test function (with first two arguments)
     aux_rlIsRHEL fake_os_release "rhel" ""
-    # clean up
-    fake_os_release --clean_up
 
   ## callback without os-release
     assertLog "approach through 'lsb-release' (callback)"
@@ -642,8 +632,6 @@ test_rlIsRHEL(){
     PATH="./:"$PATH
     # calling test function (with first argument)
     aux_rlIsRHEL fake_lsb_release "Red Hat Enterprise Linux Server"
-    # clean up
-    fake_os_release --clean_up
     PATH=$OLD_PATH
     rm -f "./beakerlib-lsb_release"
 }
@@ -675,8 +663,6 @@ test_rlIsCentOS(){
     assertLog "approach through 'os-release'"
     # calling test function (with first two arguments)
     aux_rlIsCentOS fake_os_release "centos" ""
-    # clean up
-    fake_os_release --clean_up
 
   ## callback without os-release
     assertLog "approach through 'lsb-release' (callback)"
@@ -686,8 +672,6 @@ test_rlIsCentOS(){
     PATH="./:"$PATH
     # calling test function (with first argument)
     aux_rlIsCentOS fake_lsb_release "CentOS"
-    # clean up
-    fake_os_release --clean_up
     PATH=$OLD_PATH
     rm -f "./beakerlib-lsb_release"
 }
@@ -710,8 +694,6 @@ test_rlIsFedora(){
     assertLog "approach through 'os-release'"
     # calling test function (with first two arguments)
     aux_rlIsFedora fake_os_release "fedora" ""
-    # clean up
-    fake_os_release --clean_up
 
   ## callback without os-release
     assertLog "approach through 'lsb-release' (callback)"
@@ -721,8 +703,6 @@ test_rlIsFedora(){
     PATH="./:"$PATH
     # calling test function (with first argument)
     aux_rlIsFedora fake_lsb_release "Fedora"
-    # clean up
-    fake_os_release --clean_up
     PATH=$OLD_PATH
     rm -f "./beakerlib-lsb_release"
 }
@@ -764,9 +744,6 @@ test_rlIsOS(){
 
     assertTrue "ID detected correctly" "rlIsOS ol"
     assertFalse "incorrect ID" "rlIsOS fedora"
-
-    #clean up fake os-release
-    fake_os_release --clean_up
 }
 
 
@@ -808,9 +785,6 @@ test_rlIsOSLike(){
     assertTrue "ID_LIKE detected correctly" "rlIsOSLike fedora"
     assertTrue "when wrong ID_LIKE, ID is detected correctly" "rlIsOSLike ol"
     assertFalse "incorrect distro ID_LIKE" "rlIsOSLike centos"
-
-    #clean up fake os-release
-    fake_os_release --clean_up
 }
 
 
@@ -885,9 +859,6 @@ test_rlIsOSVersion(){
     assertTrue "=36" "rlIsOSVersion =36"
     assertTrue "<36.1" "rlIsOSVersion \<36.1"
     assertTrue ">35.7" "rlIsOSVersion \>35.7"
-
-    #clean up fake os-release
-    fake_os_release --clean_up
 }
 
 
@@ -921,9 +892,6 @@ test_rlIsRHELLike(){
 
     assertFalse "it is not rhel-like distro nor version from the range" "rlIsRHELLike '>=8'"
     assertFalse "it is not rhel-like distro" "rlIsRHELLike"
-
-    #clean up fake os-release
-    fake_os_release --clean_up
 }
 
 
